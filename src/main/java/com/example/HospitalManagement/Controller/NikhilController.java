@@ -1,2 +1,4 @@
-package com.example.HospitalManagement.Controller;public class NikhilController {
+package com.example.HospitalManagement.Controller;
+
+public class NikhilController {
 }
