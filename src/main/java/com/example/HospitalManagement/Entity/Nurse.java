@@ -23,6 +23,15 @@ public class Nurse {
     @Column(name = "SSN", unique = true)
     private String ssn;
 
+    public Nurse() {}
+    public Nurse(int employeeId, String name, String position, boolean registered, String ssn) {
+        this.employeeId = employeeId;
+        this.name = name;
+        this.position = position;
+        this.registered = registered;
+        this.ssn = ssn;
+    }
+
     public int getEmployeeId() {
         return employeeId;
     }

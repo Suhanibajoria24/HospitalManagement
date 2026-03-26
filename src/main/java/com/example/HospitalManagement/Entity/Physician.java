@@ -13,7 +13,8 @@ import java.util.List;
 public class Physician {
 
     @Id
-    @Column(name = "EmployeeID")
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "employee_id")
     private int employeeId;
 
     @Column(nullable = false)
