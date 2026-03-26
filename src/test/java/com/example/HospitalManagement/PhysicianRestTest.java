@@ -78,6 +78,5 @@ class PhysicianRestTest {
     }
 
 
-    @Test
-    void updatePhysicianByName
+
 }

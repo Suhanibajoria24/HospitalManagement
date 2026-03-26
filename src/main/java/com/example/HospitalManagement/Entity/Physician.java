@@ -7,14 +7,10 @@ import java.util.List;
 
 @Entity
 @Table(name = "physician")
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
 public class Physician {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "employee_id")
+    @Column(name = "EmployeeID")
     private int employeeId;
 
     @Column(nullable = false)
