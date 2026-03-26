@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -22,33 +23,38 @@ class PhysicianRepositoryTest {
     @Test
     void testGetPhysicianByName_success(){
         Physician p = new Physician();
+        p.setEmployeeId(12);
         p.setName("nikhil");
         p.setPosition("surgeon");
         p.setSsn(93224);
 
         repo.save(p);
 
-        Optional<Physician> found = repo.findByName("nikhil");
+        List<Physician> found = repo.findByName("nikhil");
 
-        assertTrue(found.isPresent());
-        assertEquals("surgeon", found.get().getPosition());
+        assertFalse(found.isEmpty());
+        // Check if the one we just saved is in the list
+        boolean containsSurgeon = found.stream().anyMatch(physician -> "surgeon".equals(physician.getPosition()));
+        assertTrue(containsSurgeon);
     }
 
     @Test
     void testGetPhysicianByName_NotFound(){
-        Optional<Physician> p = repo.findByName("nik");
-        assertFalse(p.isPresent());
+        List<Physician> p = repo.findByName("nik");
+        assertTrue(p.isEmpty());
     }
+    
+    
 
     @Test
     void testGetPhysicianByName_NullValue(){
-        Optional<Physician> p = repo.findByName("");
-        assertFalse(p.isPresent());
+        List<Physician> p = repo.findByName("");
+        assertTrue(p.isEmpty());
     }
 
     @Test
     void testGetPhysicianByName_InvalidInput(){
-        Optional<Physician> p = repo.findByName("21323");
-        assertFalse(p.isPresent());
+        List<Physician> p = repo.findByName("21323");
+        assertTrue(p.isEmpty());
     }
 }

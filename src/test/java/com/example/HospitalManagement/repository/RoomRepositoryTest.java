@@ -9,9 +9,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -20,9 +19,9 @@ import java.util.Arrays;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
-@SpringBootTest
+@DataJpaTest
+@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 public class RoomRepositoryTest {
 
     @Autowired
@@ -75,5 +74,31 @@ public class RoomRepositoryTest {
         assertThat(result).isEmpty();
         assertThat(result.getContent()).hasSize(0);
     }
+
+    @Test
+    @DisplayName("Test #3: type = ICU + data exists - should return non-empty list")
+    public void testFindByTypeICU_WithData_ReturnsNonEmptyList() {
+
+        Pageable pageable = PageRequest.of(0, 10);
+        Page<Room> result = roomRepository.findByRoomType ("ICU", pageable);
+
+        assertThat(result).isNotEmpty();
+        assertThat(result.getContent()).hasSize(2);
+        assertThat(result.getContent()).extracting(Room::getRoomType).containsOnly("ICU");
+    }
+
+    @Test
+    @DisplayName("Test #4: type = Single + no data - should return empty list")
+    public void testFindByTypeSingle_WithoutData_ReturnsEmptyList() {
+
+        Pageable pageable = PageRequest.of(0, 10);
+        Page<Room> result = roomRepository.findByRoomType("Single", pageable);
+
+        assertThat(result).isEmpty();
+        assertThat(result.getContent()).hasSize(0);
+    }
+
+
+
 
 }

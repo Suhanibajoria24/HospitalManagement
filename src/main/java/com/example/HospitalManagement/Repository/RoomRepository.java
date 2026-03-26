@@ -12,4 +12,6 @@ import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 public interface RoomRepository extends JpaRepository<Room, Integer> {
 
     Page<Room> findByUnavailable(Boolean unavailable, Pageable pageable);
+
+    Page<Room> findByRoomType(String type,Pageable pageable);
 }

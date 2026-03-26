@@ -3,7 +3,6 @@ package com.example.HospitalManagement.Entity;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.util.List;
 
 @Entity
 @AllArgsConstructor
@@ -12,9 +11,8 @@ import java.util.List;
 @Data
 public class Physician {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "employee_id")
+    @Id 
+    @Column(name = "EmployeeID")
     private int employeeId;
 
     @Column(nullable = false)
