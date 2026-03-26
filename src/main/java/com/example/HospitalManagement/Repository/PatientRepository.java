@@ -10,4 +10,5 @@ import com.example.HospitalManagement.Entity.Patient;
 @RepositoryRestResource(path = "patients")
 public interface PatientRepository extends JpaRepository<Patient, Integer>{
 
+    List<Patient> findByNameIgnoreCase(String name);
 }
