@@ -80,13 +80,11 @@ jobs:
 
           PASSED=$(grep -oP 'Tests run: \K[0-9]+' test-output.txt | awk '{s+=$1} END {print s+0}')
           FAILED=$(grep -oP 'Failures: \K[0-9]+' test-output.txt | awk '{s+=$1} END {print s+0}')
-          ERRORS=$(grep -oP 'Errors: \K[0-9]+' test-output.txt | awk '{s+=$1} END {print s+0}')
           SKIPPED=$(grep -oP 'Skipped: \K[0-9]+' test-output.txt | awk '{s+=$1} END {print s+0}')
 
           echo ""
           echo "  Passed  : $PASSED"
           echo "  Failed  : $FAILED"
-          echo "  Errors  : $ERRORS (ignored)"
           echo "  Skipped : $SKIPPED"
           echo ""
           echo "========================================"
@@ -95,29 +93,27 @@ jobs:
             echo ""
             echo "FAILED TEST DETAILS:"
             echo "========================================"
-            
             grep -A 10 "<<< FAILURE!" test-output.txt || true
-            
             echo ""
             echo "========================================"
             echo "BUILD FAILED — $FAILED test(s) failed."
-            echo ""
-            echo "Full error details available in test-output.txt artifact"
             exit 1
           else
             echo "ALL TESTS PASSED!"
-            if [ "$ERRORS" -gt 0 ]; then
-              echo "Note: $ERRORS error(s) detected but ignored (likely test infrastructure issues)"
-            fi
           fi
 
       - name: Get JAR filename
         id: jar
         run: |
-          JAR_FILE=$(ls target/*.jar | grep -v original | head -1)
+          JAR_FILE=$(find target -name "*.jar" ! -name "*original*" | head -1)
+          if [ -z "$JAR_FILE" ]; then
+            echo "ERROR: No JAR file found in target/"
+            ls -lh target/
+            exit 1
+          fi
           echo "jar_path=$JAR_FILE" >> $GITHUB_OUTPUT
-          echo "Found JAR file: $JAR_FILE"
-          ls -lh $JAR_FILE
+          echo "Found JAR: $JAR_FILE"
+          ls -lh "$JAR_FILE"
 
       - name: Create GitHub Release & Upload JAR
         uses: softprops/action-gh-release@v2
@@ -142,7 +138,7 @@ jobs:
         with:
           name: surefire-reports
           path: target/surefire-reports/
-      
+
       - name: Upload Test Output (on failure)
         if: failure()
         uses: actions/upload-artifact@v4
