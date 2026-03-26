@@ -1,0 +1,73 @@
+name: Build and Test
+
+on:
+  push:
+    branches:
+      - room-management
+
+jobs:
+  build-and-test:
+    name: Build JAR & Run Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Cache Maven Dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+
+      - name: Build JAR
+        run: mvn clean package -DskipTests
+
+      - name: Run Tests
+        id: run_tests
+        run: |
+          mvn test --no-transfer-progress \
+            -Dsurefire.useFile=false \
+            | tee test-output.txt || true
+
+      - name: Parse and Display Test Results
+        run: |
+          echo "========================================"
+          echo "         TEST RESULTS SUMMARY          "
+          echo "========================================"
+
+          PASSED=$(grep -oP 'Tests run: \K[0-9]+' test-output.txt | awk '{s+=$1} END {print s+0}')
+          FAILED=$(grep -oP 'Failures: \K[0-9]+' test-output.txt | awk '{s+=$1} END {print s+0}')
+          ERRORS=$(grep -oP 'Errors: \K[0-9]+' test-output.txt | awk '{s+=$1} END {print s+0}')
+          SKIPPED=$(grep -oP 'Skipped: \K[0-9]+' test-output.txt | awk '{s+=$1} END {print s+0}')
+          TOTAL_FAILED=$((FAILED + ERRORS))
+
+          echo ""
+          echo "  ✅ Passed  : $PASSED"
+          echo "  ❌ Failed  : $FAILED"
+          echo "  💥 Errors  : $ERRORS"
+          echo "  ⏭️  Skipped : $SKIPPED"
+          echo ""
+          echo "========================================"
+
+          if [ "$TOTAL_FAILED" -gt 0 ]; then
+            echo "❌ BUILD FAILED — $TOTAL_FAILED test(s) did not pass."
+            exit 1
+          else
+            echo "✅ ALL TESTS PASSED!"
+          fi
+
+      - name: Upload Test Reports (on failure)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: surefire-reports
+          path: target/surefire-reports/
