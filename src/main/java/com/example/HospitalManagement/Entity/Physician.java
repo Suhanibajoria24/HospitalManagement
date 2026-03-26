@@ -3,16 +3,15 @@ package com.example.HospitalManagement.Entity;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.util.List;
 
 @Entity
-@Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Table(name = "physician")
+@Data
 public class Physician {
 
-    @Id
+    @Id 
     @Column(name = "EmployeeID")
     private int employeeId;
 
@@ -23,9 +22,5 @@ public class Physician {
     private String position;
 
     @Column(nullable = false, unique = true)
-    private int ssn;
-
-   
-
-   
+    private int ssn; 
 }

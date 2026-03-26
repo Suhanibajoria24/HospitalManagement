@@ -11,7 +11,7 @@ import java.util.Optional;
 
 @RepositoryRestResource(path = "allPhysician", collectionResourceRel = "physicians")
 public interface PhysicianRepository extends JpaRepository<Physician,Integer> {
-    Optional<Physician> findByName(String name);
+    List<Physician> findByName(String name);
 
     List<Physician> findByPosition(String position);
 
