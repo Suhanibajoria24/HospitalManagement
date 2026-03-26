@@ -21,7 +21,6 @@ public class Patient {
     @Column(name = "SSN")
     private Integer ssn;
 
-    @Column(name = "Name", nullable = false)
     private String name;
 
     @Column(name = "Address")

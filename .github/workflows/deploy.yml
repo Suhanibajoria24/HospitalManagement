@@ -5,6 +5,9 @@ on:
     branches:
       - main
 
+permissions:
+  contents: write
+
 jobs:
   build-and-test:
     name: Build JAR & Run Tests
@@ -60,22 +63,13 @@ jobs:
           mysql -h 127.0.0.1 -P 3307 -u dev -proot < schema.sql
           echo "Database schema initialized successfully!"
 
-      - name: Build JAR
-        env:
-          SPRING_DATASOURCE_URL: jdbc:mysql://127.0.0.1:3307/hms_copy
-          SPRING_DATASOURCE_USERNAME: dev
-          SPRING_DATASOURCE_PASSWORD: root
-        run: mvn clean package -DskipTests
-
-      - name: Run Tests
-        id: run_tests
+      - name: Build JAR & Run Tests
         env:
           SPRING_DATASOURCE_URL: jdbc:mysql://127.0.0.1:3307/hms_copy
           SPRING_DATASOURCE_USERNAME: dev
           SPRING_DATASOURCE_PASSWORD: root
         run: |
-          mvn test --no-transfer-progress \
-            -Dsurefire.useFile=false \
+          mvn clean package --no-transfer-progress \
             | tee test-output.txt || true
 
       - name: Parse and Display Test Results
@@ -84,15 +78,10 @@ jobs:
           echo "         TEST RESULTS SUMMARY          "
           echo "========================================"
 
-          PASSED=$(grep -oP 'Tests run: \K[0-9]+(?=,)' test-output.txt | tail -1)
-          FAILED=$(grep -oP 'Failures: \K[0-9]+(?=,)' test-output.txt | tail -1)
-          ERRORS=$(grep -oP 'Errors: \K[0-9]+(?=,)' test-output.txt | tail -1)
-          SKIPPED=$(grep -oP 'Skipped: \K[0-9]+' test-output.txt | tail -1)
-          
-          PASSED=${PASSED:-0}
-          FAILED=${FAILED:-0}
-          ERRORS=${ERRORS:-0}
-          SKIPPED=${SKIPPED:-0}
+          PASSED=$(grep -oP 'Tests run: \K[0-9]+' test-output.txt | awk '{s+=$1} END {print s+0}')
+          FAILED=$(grep -oP 'Failures: \K[0-9]+' test-output.txt | awk '{s+=$1} END {print s+0}')
+          ERRORS=$(grep -oP 'Errors: \K[0-9]+' test-output.txt | awk '{s+=$1} END {print s+0}')
+          SKIPPED=$(grep -oP 'Skipped: \K[0-9]+' test-output.txt | awk '{s+=$1} END {print s+0}')
 
           echo ""
           echo "  Passed  : $PASSED"
@@ -106,9 +95,9 @@ jobs:
             echo ""
             echo "FAILED TEST DETAILS:"
             echo "========================================"
-          
+            
             grep -A 10 "<<< FAILURE!" test-output.txt || true
-          
+            
             echo ""
             echo "========================================"
             echo "BUILD FAILED — $FAILED test(s) failed."
@@ -122,13 +111,30 @@ jobs:
             fi
           fi
 
+      - name: Get JAR filename
+        id: jar
+        run: echo "jar_path=$(ls target/*.jar | grep -v original | head -1)" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release & Upload JAR
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: release-${{ github.run_number }}
+          name: "Release #${{ github.run_number }}"
+          body: |
+            Automated release from push to main
+            - Commit: ${{ github.sha }}
+            - Triggered by: ${{ github.actor }}
+          files: ${{ steps.jar.outputs.jar_path }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Upload Test Reports (on failure)
         if: failure()
         uses: actions/upload-artifact@v4
         with:
           name: surefire-reports
           path: target/surefire-reports/
-
+      
       - name: Upload Test Output (on failure)
         if: failure()
         uses: actions/upload-artifact@v4
