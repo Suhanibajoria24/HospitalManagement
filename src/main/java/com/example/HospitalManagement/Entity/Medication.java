@@ -11,13 +11,15 @@ import lombok.Setter;
 
 import java.util.List;
 
+import org.springframework.data.domain.Persistable;
+
 @Entity
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
 @Table(name = "Medication")
-public class Medication {
+public class Medication implements Persistable<Integer>{
 
     @Id
     @Column(name = "Code")
@@ -41,4 +43,21 @@ public class Medication {
     @JsonIgnore
     @OneToMany(mappedBy = "medicationEntity", fetch = FetchType.LAZY)
     private List<Prescribes> prescriptions;
+
+
+    // override methods
+    @Override
+    public Integer getId() {
+        // TODO Auto-generated method stub
+        return this.code;
+    }
+
+    @Transient
+    private boolean isNew = true;
+
+    @Override
+    public boolean isNew() {
+        // TODO Auto-generated method stub
+        return true;
+    }  
 }

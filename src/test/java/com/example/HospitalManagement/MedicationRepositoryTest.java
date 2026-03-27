@@ -1,8 +1,8 @@
 package com.example.HospitalManagement;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
@@ -26,14 +26,6 @@ class MedicationRepositoryTest {
     // Test case 1 : find by a particular Id
     @Test
     void testFindById_Exists() {
-
-        Medication medication = new Medication();
-        medication.setCode(1);
-        medication.setName("Procrastin-X");
-        medication.setBrand("TestBrand");
-        medication.setDescription("Test medication");
-        repository.save(medication);
-
         Optional<Medication> med = repository.findById(1);
 
         assertTrue(med.isPresent());
@@ -80,22 +72,31 @@ class MedicationRepositoryTest {
     }
 
     // Test 6 : save new Medication
-    // @Test
-    // void testSaveNewMedication(){
+    @Test
+    void testSaveNewMedication(){
 
-    //     // create a Medication object and set values
-    //     Medication new_med = new Medication();
+        // create a Medication object and set values
+        Medication new_med = new Medication();
 
-    //     new_med.setCode(2);
-    //     new_med.setName("NewMed");
-    //     new_med.setBrand("NewBrand");
+        new_med.setCode(3);
+        new_med.setName("Dolo");
+        new_med.setBrand("DoloCompany");
+        new_med.setDescription("Fever Cure");
 
-    //     // save
-    //     Medication saved = repository.save(new_med);
+        // save
+        Medication saved = repository.save(new_med);
 
-    //     // check it is not null
-    //     assertNotNull(saved);
-    //     assertEquals("NewMed", saved.getName());
-    // }
+        // check it is not null
+        assertNotNull(saved);
+        assertEquals("Dolo", saved.getName());
+    }
 
+    
+    // Test 7 : Test count of Medications
+    @Test
+    void testMedicationCount(){
+        Long count = repository.count();
+
+        assertTrue(count > 0);
+    }
 }
