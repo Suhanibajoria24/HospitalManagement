@@ -1,17 +1,20 @@
 package com.example.HospitalManagement.Entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.RequiredArgsConstructor;
-import lombok.ToString;
+import lombok.Setter;
 
 import java.util.List;
 
 @Entity
 @Table(name = "Block")
-@Data
+@Getter
+@Setter
 @IdClass(BlockId.class)
+@AllArgsConstructor
 @NoArgsConstructor
 public class Block {
 
@@ -23,9 +26,13 @@ public class Block {
     @Column(name = "BlockCode")
     private Integer blockCode;
 
-    @ToString.Exclude
-    @OneToMany(mappedBy = "block", cascade = CascadeType.ALL)
+    @JsonIgnore
+    @OneToMany(mappedBy = "block", fetch = FetchType.LAZY)
     private List<Room> rooms;
+
+    @JsonIgnore
+    @OneToMany(mappedBy = "block", fetch = FetchType.LAZY)
+    private List<OnCall> onCallSchedules;
 
     public Block(Integer blockFloor, Integer blockCode) {
         this.blockFloor = blockFloor;
