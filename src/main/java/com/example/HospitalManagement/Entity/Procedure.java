@@ -10,6 +10,7 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
@@ -26,7 +27,7 @@ public class Procedure {
     @Column(name = "Code")
     private Integer code;
 
-    @NotNull
+    @NotBlank
     @Size(max = 30)
     @Column(name = "Name", length = 30, nullable = false, unique = true)
     private String name;
