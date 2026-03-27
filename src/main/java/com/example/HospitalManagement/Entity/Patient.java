@@ -38,7 +38,7 @@ public class Patient {
     @Column(name = "Phone", nullable = false, length = 10)
     private String phone;
 
-    @NotBlank
+    @NotNull
     @Column(name = "InsuranceID", nullable = false)
     private Integer insuranceID;
 
