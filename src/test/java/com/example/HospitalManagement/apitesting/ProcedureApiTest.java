@@ -1,5 +1,6 @@
 package com.example.HospitalManagement.apitesting;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
@@ -78,6 +79,49 @@ void testAddProcedure_InvalidInput_ShouldThrowException() throws Exception {
 
 }
 
+@Test
+void testUpdateProcedureCost_Success() throws Exception {
 
+    String createJson = """
+        {
+          "code": 3001,
+          "name": "X-Ray",
+          "cost": 2000
+        }
+        """;
+
+    mockMvc.perform(post("/procedures")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(createJson))
+            .andExpect(status().isCreated());
+
+    String updateJson = """
+        {
+          "cost": 4000
+        }
+        """;
+
+    mockMvc.perform(patch("/procedures/3001")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(updateJson))
+            .andExpect(status().isNoContent());
+
+    mockMvc.perform(get("/procedures/3001"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.cost").value(4000.0));
+}
+
+@Test
+void testUpdateProcedureCost_ResourceNotFoundAndInvalidInput() throws Exception{
+        String updateJson = """
+        {
+          "cost": 4000
+        }
+        """;
+        mockMvc.perform(patch("/procedures/100")
+        .contentType(MediaType.APPLICATION_JSON)
+        .content(updateJson))
+        .andReturn();
+}
 
 }
