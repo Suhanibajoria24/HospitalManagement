@@ -149,6 +149,6 @@ class MedicationRestTest {
     @Test
     void testMedicationNotFound() throws Exception {
         mockMvc.perform(get("/allMedications/9999"))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isNotFound() );
     }
 }

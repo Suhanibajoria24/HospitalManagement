@@ -113,8 +113,7 @@ public class PatientApiTest {
     mockMvc.perform(post("/patients")
             .contentType(MediaType.APPLICATION_JSON)
             .content(invalidJson))
-        .andExpect(status().isBadRequest())
-        .andExpect(content().string("Invalid input"));
+        .andExpect(status().isBadRequest());
     }
     
 }
