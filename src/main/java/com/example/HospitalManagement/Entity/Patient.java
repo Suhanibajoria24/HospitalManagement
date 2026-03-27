@@ -1,7 +1,9 @@
 package com.example.HospitalManagement.Entity;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.*;
 
@@ -20,22 +22,23 @@ public class Patient {
     @Column(name = "SSN")
     private Integer ssn;
 
-    @NotNull
+    @NotBlank
     @Size(max = 30)
     @Column(name = "Name", nullable = false, length = 30)
     private String name;
 
-    @NotNull
+    @NotBlank
     @Size(max = 30)
     @Column(name = "Address", nullable = false, length = 30)
     private String address;
 
-    @NotNull
-    @Size(max = 30)
-    @Column(name = "Phone", nullable = false, length = 30)
+    @NotBlank
+    @Size(min = 10, max = 10, message = "Phone number must be exactly 10 digits")
+    @Pattern(regexp = "\\d{10}", message = "Phone number must contain only digits")
+    @Column(name = "Phone", nullable = false, length = 10)
     private String phone;
 
-    @NotNull
+    @NotBlank
     @Column(name = "InsuranceID", nullable = false)
     private Integer insuranceID;
 
