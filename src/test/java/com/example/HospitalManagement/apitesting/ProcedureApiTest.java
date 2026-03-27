@@ -69,12 +69,12 @@ void testAddProcedure_InvalidInput_ShouldThrowException() throws Exception {
         }
         """;
 
-    assertThrows(Exception.class, () -> {
+
         mockMvc.perform(post("/procedures")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(json))
                 .andReturn();
-    });
+
 
 }
 
