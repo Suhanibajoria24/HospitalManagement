@@ -1,7 +1,9 @@
 package com.example.HospitalManagement.repository;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -25,41 +27,27 @@ public class ProcedureRepositoryTest {
     private ProcedureRepository procedureRepository;
 
     private List<Procedure> procedures;
-
     @BeforeEach
-    public void setUp() {
+void setUp() {
+    Procedure p = new Procedure();
+    p.setCode(55555);
+    p.setName("Heart Surgery");
+    p.setCost(12000.0);
+    procedureRepository.save(p);
+}
 
-        Procedure p1 = new Procedure();
-        p1.setCode(200);
-        p1.setName("Heart Surgery");
-        p1.setCost(15000.0);
+@AfterEach
+void tearDown() {
+    procedureRepository.deleteById(55555);
+}
 
-        Procedure p2 = new Procedure();
-        p2.setCode(201);
-        p2.setName("Brain Surgery");
-        p2.setCost(20000.0);
-
-        Procedure p3 = new Procedure();
-        p3.setCode(202);
-        p3.setName("Heart Surgery"); 
-        p3.setCost(18000.0);
-
-        procedures = Arrays.asList(p1, p2, p3);
-        procedureRepository.saveAll(procedures);
-    }
-
-    @AfterEach
-    public void flushData() {
-        procedureRepository.deleteAll(procedures);
-    }
 
     @Test
-    @Transactional
-    @Rollback
+
     void testSaveProcedure() {
 
         Procedure procedure = new Procedure();
-        procedure.setCode(1001);
+        procedure.setCode(77777);
         procedure.setName("Kidney Surgery");
         procedure.setCost(12000.0);
 
@@ -68,7 +56,65 @@ public class ProcedureRepositoryTest {
         assertNotNull(saved.getCode());
         assertEquals("Kidney Surgery", saved.getName());
         assertEquals(12000.0, saved.getCost());
+        procedureRepository.deleteById(77777);
 }
+
+@Test
+void testFindByName_Success() {
+
+    List<Procedure> found = procedureRepository.findByNameIgnoreCase("Heart Surgery");
+    assertFalse(found.isEmpty());
+
+}
+
+@Test
+void testFindByName_NotFound() {
+    List<Procedure> found = procedureRepository.findByNameIgnoreCase("Eye Surgery");
+    assertTrue(found.isEmpty());
+}
+
+@Test
+void testFindByName_EmptyString() {
+    List<Procedure> found = procedureRepository.findByNameIgnoreCase("");
+    assertTrue(found.isEmpty());
+}
+
+@Test
+void testFindByName_InvalidInput() {
+    List<Procedure> found = procedureRepository.findByNameIgnoreCase("12345");
+    assertTrue(found.isEmpty());
+}
+
+@Test
+void testFindByCode_Success() {
+    Procedure found = procedureRepository.findById(55555).orElse(null);
+    assertNotNull(found);
+    assertEquals("Heart Surgery", found.getName());
+}
+
+@Test
+void testFindByCode_NotFound() {
+    Procedure found = procedureRepository.findById(99999).orElse(null);
+    assertNull(found);
+}
+
+@Test
+void testNoBlankNamesSaved() {
+    List<Procedure> result = procedureRepository.findProceduresWithBlankName();
+    assertTrue(result.isEmpty());
+}
+
+// @Test
+// void testSaveProcedure_DuplicateCode_ShouldThrow() {
+//     Procedure duplicate = new Procedure();
+//     duplicate.setCode(55559); 
+//     duplicate.setName("Eye Surgery");
+//     duplicate.setCost(5000.0);
+
+//     assertThrows(DataIntegrityViolationException.class, () -> {
+//         procedureRepository.saveAndFlush(duplicate);
+//     });
+// }
 
 
 

@@ -6,6 +6,8 @@ import lombok.*;
 
 import java.util.Date;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 @Entity
 @Getter
 @Setter
@@ -33,10 +35,12 @@ public class TrainedIn {
     @Column(name = "CertificationExpires", nullable = false)
     private Date certificationExpires;
 
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "Physician", referencedColumnName = "EmployeeID", insertable = false, updatable = false)
     private Physician physicianEntity;
 
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "Treatment", referencedColumnName = "Code", insertable = false, updatable = false)
     private Procedure treatmentEntity;

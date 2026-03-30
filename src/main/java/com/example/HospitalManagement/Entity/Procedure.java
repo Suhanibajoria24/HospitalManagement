@@ -28,7 +28,7 @@ public class Procedure {
     private Integer code;
 
 
-    @NotNull
+  
     @NotBlank
     @Size(max = 30)
     @Column(name = "Name", length = 30, nullable = false, unique = true)

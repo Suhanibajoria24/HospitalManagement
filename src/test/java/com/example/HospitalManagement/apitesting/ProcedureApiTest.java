@@ -4,35 +4,32 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.hamcrest.Matchers.emptyString;
-import static org.hamcrest.Matchers.not;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.rest.core.event.ValidatingRepositoryEventListener;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.dao.DataIntegrityViolationException;
-import com.example.HospitalManagement.Entity.Procedure;
-import com.example.HospitalManagement.Repository.ProcedureRepository;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.validation.Validator;
+
 
 @SpringBootTest
 @AutoConfigureMockMvc
+@Transactional
 public class ProcedureApiTest {
     @Autowired
     private MockMvc mockMvc;
 
-    @Autowired
-    private ProcedureRepository procedureRepository;
-
     @Test
     void testGetAllProcedures_Pagination_Success() throws Exception {
 
-        mockMvc.perform(get("/procedures?page=0&size=5"));
+        mockMvc.perform(get("/procedures?page=0&size=5"))
+        .andExpect(status().isOk());
 
-}
+    }
     @Test
     void testGetAllProcedures_NoData_ShouldReturnEmpty() throws Exception {
 
@@ -65,7 +62,7 @@ void testAddProcedure_InvalidInput_ShouldThrowException() throws Exception {
     String json = """
         {
           "code": 1003,
-          "name": null,
+          "name": "",
           "cost": null
         }
         """;
@@ -74,8 +71,8 @@ void testAddProcedure_InvalidInput_ShouldThrowException() throws Exception {
         mockMvc.perform(post("/procedures")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(json))
-                .andReturn();
-
+                .andDo(print())
+                .andExpect(status().isBadRequest());
 
 }
 
@@ -122,6 +119,25 @@ void testUpdateProcedureCost_ResourceNotFoundAndInvalidInput() throws Exception{
         .contentType(MediaType.APPLICATION_JSON)
         .content(updateJson))
         .andReturn();
+}
+
+@org.springframework.boot.test.context.TestConfiguration
+static class TestConfig {
+
+    @Autowired
+    private org.springframework.data.rest.core.event.ValidatingRepositoryEventListener listener;
+
+    @jakarta.annotation.PostConstruct
+    public void init() {
+
+        org.springframework.validation.beanvalidation.LocalValidatorFactoryBean validator =
+                new org.springframework.validation.beanvalidation.LocalValidatorFactoryBean();
+
+        validator.afterPropertiesSet(); // IMPORTANT
+
+        listener.addValidator("beforeCreate", validator);
+        listener.addValidator("beforeSave", validator);
+    }
 }
 
 }
