@@ -38,7 +38,7 @@ public class PatientRepositoryTest {
         physician.setName("Dr. House");
         physician.setPosition("Head of Diagnostics");
         physician.setSsn(111223344);
-        
+
         savedPhysician = physicianRepository.save(physician);
 
         Patient p1 = new Patient();
@@ -105,7 +105,7 @@ public class PatientRepositoryTest {
 
         // Test the custom repository method
         var foundPatients = patientRepository.findByNameIgnoreCase("ved");
-        
+
         assertTrue(foundPatients.size() > 0);
         assertEquals("VED", foundPatients.get(0).getName());
     }
@@ -133,7 +133,7 @@ public class PatientRepositoryTest {
         // Update
         Optional<Patient> optionalPatient = patientRepository.findById(300003);
         assertTrue(optionalPatient.isPresent());
-        
+
         Patient toUpdate = optionalPatient.get();
         toUpdate.setAddress("Mumbai");
         patientRepository.save(toUpdate);

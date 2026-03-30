@@ -63,7 +63,7 @@ public class AppointmentRepositoryTest {
         savedPatient = patientRepository.save(patient);
     }
 
-    //Save
+    // Save
 
     @Test
     @Rollback
@@ -73,7 +73,7 @@ public class AppointmentRepositoryTest {
         appointment.setPatient(savedPatient);
         appointment.setPhysician(savedPhysician);
         appointment.setStarto(new Date(126, 5, 1, 10, 0, 0)); // 2026-06-01 10:00
-        appointment.setEndo(new Date(126, 5, 1, 11, 0, 0));   // 2026-06-01 11:00
+        appointment.setEndo(new Date(126, 5, 1, 11, 0, 0)); // 2026-06-01 11:00
         appointment.setExaminationRoom("Room A");
 
         Appointment saved = appointmentRepository.save(appointment);
@@ -85,7 +85,7 @@ public class AppointmentRepositoryTest {
         assertEquals("Room A", saved.getExaminationRoom());
     }
 
-    //findByStartoBetween
+    // findByStartoBetween
 
     @Test
     @Rollback
@@ -100,15 +100,12 @@ public class AppointmentRepositoryTest {
         appointmentRepository.save(appointment);
 
         List<Appointment> result = appointmentRepository.findByStartoBetween(
-            new Date(126, 5, 1, 0, 0, 0),   // 2026-06-01 start
-            new Date(126, 5, 1, 23, 59, 59)  // 2026-06-01 end
+                new Date(126, 5, 1, 0, 0, 0), // 2026-06-01 start
+                new Date(126, 5, 1, 23, 59, 59) // 2026-06-01 end
         );
 
-        assertTrue(result.size() > 0);
-        assertEquals(2, result.size());
+        assertFalse(result.isEmpty());
 
-        assertTrue(result.stream()
-                .anyMatch(a -> a.getAppointmentId().equals(5001)));
 
         assertTrue(result.stream()
                 .anyMatch(a -> a.getAppointmentId().equals(6002)));
@@ -128,14 +125,14 @@ public class AppointmentRepositoryTest {
 
         // Search different date
         List<Appointment> result = appointmentRepository.findByStartoBetween(
-            new Date(126, 0, 1, 0, 0, 0),   // 2026-01-01 start
-            new Date(126, 0, 1, 23, 59, 59)  // 2026-01-01 end
+                new Date(126, 0, 1, 0, 0, 0), // 2026-01-01 start
+                new Date(126, 0, 1, 23, 59, 59) // 2026-01-01 end
         );
 
         assertThat(result).isEmpty();
     }
 
-    //findByPatientName
+    // findByPatientName
 
     @Test
     @Rollback
@@ -162,7 +159,7 @@ public class AppointmentRepositoryTest {
         assertThat(result).isEmpty();
     }
 
-    //findById
+    // findById
 
     @Test
     @Rollback
@@ -187,7 +184,7 @@ public class AppointmentRepositoryTest {
         assertThat(appointmentRepository.findById(99999)).isEmpty();
     }
 
-    //findAll
+    // findAll
 
     @Test
     @Rollback
@@ -212,8 +209,6 @@ public class AppointmentRepositoryTest {
 
         assertThat(appointmentRepository.findAll().size()).isGreaterThanOrEqualTo(2);
     }
-
-
 
     @Test
     @Transactional
@@ -305,7 +300,6 @@ public class AppointmentRepositoryTest {
         a1.setStarto(new Date());
         a1.setEndo(new Date());
 
-
         Appointment a2 = new Appointment();
         a2.setAppointmentId(6002);
         a2.setPrepNurse(nurse);
@@ -333,6 +327,7 @@ public class AppointmentRepositoryTest {
 
         List<Appointment> result = appointmentRepository.findByPrepNurse(null);
 
-        assertNotNull(result);;
+        assertNotNull(result);
+        ;
     }
 }

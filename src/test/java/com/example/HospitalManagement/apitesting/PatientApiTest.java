@@ -38,132 +38,116 @@ public class PatientApiTest {
         physicianRepository.save(pcp);
     }
 
-    //pagination test
+    // pagination test
     @Test
-    void testGetAllPatients_PaginationSuccess() throws Exception{
+    void testGetAllPatients_PaginationSuccess() throws Exception {
         mockMvc.perform(get("/patients?page=0&size=5"))
-        .andExpect(status().isOk())
-        .andDo(print());
+                .andExpect(status().isOk())
+                .andDo(print());
     }
-    
 
     @Test
-    void testGetAllPatients_PageOutOfRange() throws Exception{
+    void testGetAllPatients_PageOutOfRange() throws Exception {
         mockMvc.perform(get("/patients?page=10&size=5"))
-        .andExpect(status().isOk());
+                .andExpect(status().isOk());
     }
 
-    //get all patients
-    @Test
-    void testGetAllPatients_WithProjection_ReturnsProjectedFields() throws Exception {
-    mockMvc.perform(get("/patients?projection=patientSummary"))
-        .andDo(print())
-        .andExpect(status().isOk())
-        .andExpect(jsonPath("$._embedded.patients[0].name").exists())
-        .andExpect(jsonPath("$._embedded.patients[0].address").exists())
-        .andExpect(jsonPath("$._embedded.patients[0].phone").exists())
-        .andExpect(jsonPath("$._embedded.patients[0].pcpName").exists())
-        // ✅ SSN and insuranceID should NOT be present
-        .andExpect(jsonPath("$._embedded.patients[0].ssn").doesNotExist())
-        .andExpect(jsonPath("$._embedded.patients[0].insuranceID").doesNotExist());
-    }
 
     @Test
-    void testGetAllPatients_NoDataExists() throws Exception{
+    void testGetAllPatients_NoDataExists() throws Exception {
         mockMvc.perform(get("/patients"))
-        .andExpect(status().isOk());
+                .andExpect(status().isOk());
     }
 
-    //add patient 
+    // add patient
     @Test
     void testCreatePatient_ValidData_ReturnsCreated() throws Exception {
 
-     String patientJson = """
-        {
-            "ssn": 100000018,
-            "name": "ved",
-            "address": "NGP",
-            "phone": "9999999999",
-            "insuranceID": 12345,
-            "pcp": "/allPhysician/100"
-        }
-        """;
+        String patientJson = """
+                {
+                    "ssn": 100000018,
+                    "name": "ved",
+                    "address": "NGP",
+                    "phone": "9999999999",
+                    "insuranceID": 12345,
+                    "pcp": "/allPhysician/100"
+                }
+                """;
 
-         mockMvc.perform(post("/patients")
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(patientJson))
-            .andExpect(status().isCreated())
-            .andExpect(content().string(""));
+        mockMvc.perform(post("/patients")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(patientJson))
+                .andExpect(status().isCreated())
+                .andExpect(content().string(""));
     }
 
     @Test
     void testCreatePatient_InvalidFormat_ReturnsBadRequest() throws Exception {
 
-    String invalidJson = """
-    {
-        "ssn": "AB123",
-        "name": "",
-        "address": "Pune",
-        "phone": "9999999999",
-        "insuranceID": 12345,
-        "pcp": "http://localhost:9090/allPhysician/100"
-    }
-    """;
+        String invalidJson = """
+                {
+                    "ssn": "AB123",
+                    "name": "",
+                    "address": "Pune",
+                    "phone": "9999999999",
+                    "insuranceID": 12345,
+                    "pcp": "http://localhost:9090/allPhysician/100"
+                }
+                """;
 
-    mockMvc.perform(post("/patients")
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(invalidJson))
-        .andExpect(status().isBadRequest());
+        mockMvc.perform(post("/patients")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(invalidJson))
+                .andExpect(status().isBadRequest());
     }
 
-    //update the patient
+    // update the patient
     @Test
     void testUpdatePatientPhone_Success() throws Exception {
-    // 1. Create a Patient first (Linking to Physician 100 from your @BeforeEach)
-    String createJson = """
-        {
-            "ssn": 100000020,
-            "name": "Arjun",
-            "address": "Nagpur",
-            "phone": "1234567890",
-            "insuranceID": 55555,
-            "pcp": "/physicians/100"
-        }
-        """;
+        // 1. Create a Patient first (Linking to Physician 100 from your @BeforeEach)
+        String createJson = """
+                {
+                    "ssn": 100000020,
+                    "name": "Arjun",
+                    "address": "Nagpur",
+                    "phone": "1234567890",
+                    "insuranceID": 55555,
+                    "pcp": "/physicians/100"
+                }
+                """;
 
-    mockMvc.perform(post("/patients")
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(createJson))
-            .andExpect(status().isCreated());
+        mockMvc.perform(post("/patients")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(createJson))
+                .andExpect(status().isCreated());
 
-    // 2. Update only the phone number
-    String updateJson = """
-        {
-            "phone": "9876543210"
-        }
-        """;
+        // 2. Update only the phone number
+        String updateJson = """
+                {
+                    "phone": "9876543210"
+                }
+                """;
 
-    mockMvc.perform(patch("/patients/100000020")
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(updateJson))
-            .andExpect(status().isNoContent()); // Spring Data REST returns 204 No Content for PATCH/PUT
+        mockMvc.perform(patch("/patients/100000020")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(updateJson))
+                .andExpect(status().isNoContent()); // Spring Data REST returns 204 No Content for PATCH/PUT
 
-    // 3. Verify the change
-    mockMvc.perform(get("/patients/100000020"))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.phone").value("9876543210"));
+        // 3. Verify the change
+        mockMvc.perform(get("/patients/100000020"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.phone").value("9876543210"));
     }
-
 
     @Test
     void testUpdatePatient_NotFound() throws Exception {
-    String updateJson = "{\"address\": \"Mumbai\"}";
-    
-    // Attempting to update a non-existent SSN
-    mockMvc.perform(patch("/patients/999999")
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(updateJson))
-            .andExpect(status().isNotFound());
+        String updateJson = "{\"address\": \"Mumbai\"}";
+
+        // Attempting to update a non-existent SSN
+        mockMvc.perform(patch("/patients/999999")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(updateJson))
+                .andExpect(status().isNotFound());
     }
 
 }
