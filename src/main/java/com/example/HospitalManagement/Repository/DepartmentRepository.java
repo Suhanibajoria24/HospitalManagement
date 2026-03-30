@@ -15,7 +15,7 @@ public interface DepartmentRepository extends JpaRepository<Department, Integer>
 
      Page<Department> findByName(String name,Pageable pageable);
 
-   
+    
     boolean existsByHead_EmployeeId(Integer physicianId);
 }
 
