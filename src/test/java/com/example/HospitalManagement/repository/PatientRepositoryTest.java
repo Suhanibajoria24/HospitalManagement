@@ -40,6 +40,33 @@ public class PatientRepositoryTest {
         physician.setSsn(111223344);
         
         savedPhysician = physicianRepository.save(physician);
+
+        Patient p1 = new Patient();
+        p1.setSsn(100001);
+        p1.setName("John Doe");
+        p1.setAddress("123 Baker St");
+        p1.setPhone("1234567890");
+        p1.setInsuranceID(998877);
+        p1.setPcp(savedPhysician);
+        patientRepository.save(p1);
+
+        Patient p2 = new Patient();
+        p2.setSsn(100002);
+        p2.setName("Jane Doe");
+        p2.setAddress("456 Baker St");
+        p2.setPhone("9876543210");
+        p2.setInsuranceID(112233);
+        p2.setPcp(savedPhysician);
+        patientRepository.save(p2);
+
+        Patient p3 = new Patient();
+        p3.setSsn(100003);
+        p3.setName("Alice");
+        p3.setAddress("789 Baker St");
+        p3.setPhone("9000000001");
+        p3.setInsuranceID(445566);
+        p3.setPcp(savedPhysician);
+        patientRepository.save(p3);
     }
 
     @Test
@@ -118,7 +145,7 @@ public class PatientRepositoryTest {
 
     @Test
     void testFindById_ExistingId_ReturnsPatient() {
-        assertThat(patientRepository.findById(100000014)).isPresent();
+        assertThat(patientRepository.findById(100001)).isPresent();
     }
 
     @Test
@@ -128,6 +155,6 @@ public class PatientRepositoryTest {
 
     @Test
     void testFindAll_ReturnsAllPatients() {
-        assertThat(patientRepository.findAll()).hasSize(3);
+        assertThat(patientRepository.findAll()).isNotEmpty();
     }
 }

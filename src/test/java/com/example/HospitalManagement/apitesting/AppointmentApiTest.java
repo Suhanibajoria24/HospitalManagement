@@ -1,16 +1,12 @@
 package com.example.HospitalManagement.apitesting;
 
 import org.junit.jupiter.api.*;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
-import com.example.HospitalManagement.Entity.Appointment;
 import com.example.HospitalManagement.Entity.Patient;
 import com.example.HospitalManagement.Entity.Physician;
 import com.example.HospitalManagement.Repository.AppointmentRepository;
@@ -23,7 +19,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 
-import java.util.stream.Stream;
 
 @SpringBootTest
 @AutoConfigureMockMvc
