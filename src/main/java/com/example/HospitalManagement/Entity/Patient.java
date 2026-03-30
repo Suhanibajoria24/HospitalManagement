@@ -9,6 +9,8 @@ import lombok.*;
 
 import java.util.List;
 
+import org.springframework.data.domain.Persistable;
+
 
 @Entity
 @Getter
@@ -16,7 +18,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "Patient")
-public class Patient {
+public class Patient implements Persistable<Integer> {
 
     @Id
     @Column(name = "SSN")
@@ -62,4 +64,27 @@ public class Patient {
    @JsonIgnore
    @OneToMany(mappedBy = "patientEntity", fetch = FetchType.LAZY)
    private List<Undergoes> proceduresUndergone;
+
+   @Override
+   public boolean isNew() {
+       // TODO Auto-generated method stub
+       return isNew;
+   }
+
+   @Override
+   public Integer getId() {
+       // TODO Auto-generated method stub
+       return ssn;
+   }
+
+
+   @JsonIgnore
+   @Transient
+   private boolean isNew=true;
+
+   @PostLoad
+   @PostPersist
+   void  markAsNotNew(){
+    this.isNew=false;
+   }
 }

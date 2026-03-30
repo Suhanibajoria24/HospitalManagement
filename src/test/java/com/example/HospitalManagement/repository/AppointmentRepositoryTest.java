@@ -84,26 +84,28 @@ public class AppointmentRepositoryTest {
 
     //findByStartoBetween
 
-    @Test
-    @Rollback
-    void testFindByDate_MatchingDate_ReturnsAppointments() {
-        Appointment appointment = new Appointment();
-        appointment.setAppointmentId(6002);
-        appointment.setPatient(savedPatient);
-        appointment.setPhysician(savedPhysician);
-        appointment.setStarto(new Date(126, 5, 1, 10, 0, 0)); // 2026-06-01
-        appointment.setEndo(new Date(126, 5, 1, 11, 0, 0));
-        appointment.setExaminationRoom("Room B");
-        appointmentRepository.save(appointment);
+   @Test
+@Rollback
+void testFindByDate_MatchingDate_ReturnsAppointments() {
+    Appointment appointment = new Appointment();
+    appointment.setAppointmentId(6002);
+    appointment.setPatient(savedPatient);
+    appointment.setPhysician(savedPhysician);
+    appointment.setStarto(new Date(126, 5, 1, 10, 0, 0)); // 2026-06-01
+    appointment.setEndo(new Date(126, 5, 1, 11, 0, 0));
+    appointment.setExaminationRoom("Room B");
+    appointmentRepository.save(appointment);
 
-        List<Appointment> result = appointmentRepository.findByStartoBetween(
-            new Date(126, 5, 1, 0, 0, 0),   // 2026-06-01 start
-            new Date(126, 5, 1, 23, 59, 59)  // 2026-06-01 end
-        );
+    List<Appointment> result = appointmentRepository.findByStartoBetween(
+        new Date(126, 5, 1, 0, 0, 0),   // 2026-06-01 start
+        new Date(126, 5, 1, 23, 59, 59)  // 2026-06-01 end
+    );
 
-        assertTrue(result.size() > 0);
-        assertEquals(6002, result.get(0).getAppointmentId());
-    }
+    // ✅ just verify our saved appointment is present in results
+    assertTrue(result.size() > 0);
+    assertTrue(result.stream()
+        .anyMatch(a -> a.getAppointmentId() == 6002));
+}
 
     @Test
     @Rollback
