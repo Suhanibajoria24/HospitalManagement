@@ -115,5 +115,55 @@ public class PatientApiTest {
             .content(invalidJson))
         .andExpect(status().isBadRequest());
     }
+
+    //update the patient
+    @Test
+    void testUpdatePatientPhone_Success() throws Exception {
+    // 1. Create a Patient first (Linking to Physician 100 from your @BeforeEach)
+    String createJson = """
+        {
+            "ssn": 100000020,
+            "name": "Arjun",
+            "address": "Nagpur",
+            "phone": "1234567890",
+            "insuranceID": 55555,
+            "pcp": "/physicians/100"
+        }
+        """;
+
+    mockMvc.perform(post("/patients")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(createJson))
+            .andExpect(status().isCreated());
+
+    // 2. Update only the phone number
+    String updateJson = """
+        {
+            "phone": "9876543210"
+        }
+        """;
+
+    mockMvc.perform(patch("/patients/100000020")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(updateJson))
+            .andExpect(status().isNoContent()); // Spring Data REST returns 204 No Content for PATCH/PUT
+
+    // 3. Verify the change
+    mockMvc.perform(get("/patients/100000020"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.phone").value("9876543210"));
+    }
+
+
+    @Test
+    void testUpdatePatient_NotFound() throws Exception {
+    String updateJson = "{\"address\": \"Mumbai\"}";
     
+    // Attempting to update a non-existent SSN
+    mockMvc.perform(patch("/patients/999999")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(updateJson))
+            .andExpect(status().isNotFound());
+    }
+
 }
