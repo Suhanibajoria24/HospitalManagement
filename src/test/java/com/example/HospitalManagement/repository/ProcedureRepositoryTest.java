@@ -34,11 +34,25 @@ void setUp() {
     p.setName("Heart Surgery");
     p.setCost(12000.0);
     procedureRepository.save(p);
+
+    if (!procedureRepository.existsById(99999)) {
+        Procedure mri = new Procedure();
+        mri.setCode(99999);
+        mri.setName("MRI");
+        mri.setCost(3000.0);
+        procedureRepository.save(mri);
+    }
 }
+
 
 @AfterEach
 void tearDown() {
-    procedureRepository.deleteById(55555);
+    if (procedureRepository.existsById(55555)) {
+        procedureRepository.deleteById(55555);
+    }
+    if (procedureRepository.existsById(99999)) {
+        procedureRepository.deleteById(99999);
+    }
 }
 
 
@@ -69,7 +83,7 @@ void testFindByName_Success() {
 
 @Test
 void testFindByName_NotFound() {
-    List<Procedure> found = procedureRepository.findByNameIgnoreCase("Eye Surgery");
+    List<Procedure> found = procedureRepository.findByNameIgnoreCase("CT scan");
     assertTrue(found.isEmpty());
 }
 
@@ -94,7 +108,7 @@ void testFindByCode_Success() {
 
 @Test
 void testFindByCode_NotFound() {
-    Procedure found = procedureRepository.findById(99999).orElse(null);
+    Procedure found = procedureRepository.findById(66666).orElse(null);
     assertNull(found);
 }
 
@@ -104,17 +118,22 @@ void testNoBlankNamesSaved() {
     assertTrue(result.isEmpty());
 }
 
-// @Test
-// void testSaveProcedure_DuplicateCode_ShouldThrow() {
-//     Procedure duplicate = new Procedure();
-//     duplicate.setCode(55559); 
-//     duplicate.setName("Eye Surgery");
-//     duplicate.setCost(5000.0);
+@Autowired
+private jakarta.persistence.EntityManager entityManager;
 
-//     assertThrows(DataIntegrityViolationException.class, () -> {
-//         procedureRepository.saveAndFlush(duplicate);
-//     });
-// }
+@Test
+@org.springframework.transaction.annotation.Transactional
+void testSaveProcedure_DuplicateCode_ShouldThrow() {
+    Procedure duplicate = new Procedure();
+    duplicate.setCode(99999);
+    duplicate.setName("MRI"); // already exists in DB
+    duplicate.setCost(5000.0);
+
+    assertThrows(Exception.class, () -> {
+        entityManager.persist(duplicate);
+        entityManager.flush();
+    });
+}
 
 
 

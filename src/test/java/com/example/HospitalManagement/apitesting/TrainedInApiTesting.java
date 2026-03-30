@@ -41,21 +41,30 @@ void tearDown() {
 
 @Test
 void testFindTrainedIn_ByTreatment() throws Exception {
-
-    mockMvc.perform(get("/trainedIn/search/findByTreatment")
-            .param("treatment", "1001"))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$._embedded.trainedIns").exists());
-}
-@Test
-void testGetCertificationsByProcedure_Pagination_Success() throws Exception {
-
     mockMvc.perform(get("/trainedIn/search/findByTreatment")
             .param("treatment", "1001")
-            .param("page", "0")
-            .param("size", "5"))
+            .param("projection", "viewCertified")
+            .accept("application/hal+json"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$._embedded.trainedIns").exists())
+            .andExpect(jsonPath("$._embedded.trainedIns[0].certificationDate").exists())
+            .andExpect(jsonPath("$._embedded.trainedIns[0].certificationExpires").exists())
+            .andExpect(jsonPath("$._embedded.trainedIns[0].hasExpired").value(false))
+            .andExpect(jsonPath("$._embedded.trainedIns[0].physicianEntity.name").value("Dr test"));
+}
+
+@Test
+void testGetCertificationsByProcedure_Pagination_Success() throws Exception {
+    mockMvc.perform(get("/trainedIn/search/findByTreatment")
+            .param("treatment", "1001")
+            .param("projection", "viewCertified")
+            .param("page", "0")
+            .param("size", "5")
+            .accept("application/hal+json"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$._embedded.trainedIns").exists())
+            .andExpect(jsonPath("$._embedded.trainedIns[0].physicianEntity.name").value("Dr test"))
+            .andExpect(jsonPath("$._embedded.trainedIns[0].hasExpired").value(false))
             .andExpect(jsonPath("$.page").exists())
             .andExpect(jsonPath("$.page.size").value(5));
 }
@@ -158,24 +167,6 @@ void testRenewCertification_NotFound_ShouldReturn404() throws Exception {
             .andExpect(status().isNotFound());
 }
 
-@org.springframework.boot.test.context.TestConfiguration
-static class TestConfig {
-
-    @Autowired
-    private org.springframework.data.rest.core.event.ValidatingRepositoryEventListener listener;
-
-    @jakarta.annotation.PostConstruct
-    public void init() {
-
-        org.springframework.validation.beanvalidation.LocalValidatorFactoryBean validator =
-                new org.springframework.validation.beanvalidation.LocalValidatorFactoryBean();
-
-        validator.afterPropertiesSet(); 
-
-        listener.addValidator("beforeCreate", validator);
-        listener.addValidator("beforeSave", validator);
-    }
-}
 }
 
 

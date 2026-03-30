@@ -27,7 +27,6 @@ public class TrainedInRepositoryTesting {
     @Autowired
     private TrainedInRepository trainedInRepository;
 
-    // Use physician and treatment IDs that already exist in your pre-seeded DB
     private static final Integer TEST_PHYSICIAN = 1003;
     private static final Integer TEST_TREATMENT = 1001;
 

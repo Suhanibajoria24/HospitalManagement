@@ -35,10 +35,11 @@ public class TrainedIn {
     @Column(name = "CertificationExpires", nullable = false)
     private Date certificationExpires;
 
-    @JsonIgnore
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "Physician", referencedColumnName = "EmployeeID", insertable = false, updatable = false)
-    private Physician physicianEntity;
+
+@ManyToOne(fetch = FetchType.LAZY)
+@JoinColumn(name = "Physician", referencedColumnName = "EmployeeID", insertable = false, updatable = false)
+@com.fasterxml.jackson.annotation.JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+private Physician physicianEntity;
 
     @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
