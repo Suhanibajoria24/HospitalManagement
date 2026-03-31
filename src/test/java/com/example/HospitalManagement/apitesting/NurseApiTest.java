@@ -1,12 +1,6 @@
 package com.example.HospitalManagement.apitesting;
-import com.example.HospitalManagement.Entity.Appointment;
-import com.example.HospitalManagement.Entity.Nurse;
-import com.example.HospitalManagement.Entity.Patient;
-import com.example.HospitalManagement.Entity.Physician;
-import com.example.HospitalManagement.Repository.AppointmentRepository;
-import com.example.HospitalManagement.Repository.NurseRepository;
-import com.example.HospitalManagement.Repository.PatientRepository;
-import com.example.HospitalManagement.Repository.PhysicianRepository;
+import com.example.HospitalManagement.Entity.*;
+import com.example.HospitalManagement.Repository.*;
 import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,6 +14,7 @@ import java.util.List;
 
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest
@@ -42,6 +37,12 @@ public class NurseApiTest {
 
     @Autowired
     private PhysicianRepository physicianRepository;
+
+    @Autowired
+    private OnCallRepository onCallRepository;
+
+    @Autowired
+    private BlockRepository blockRepository;
 
     private Nurse nurse1;
     private Nurse nurse2;
@@ -399,5 +400,108 @@ public class NurseApiTest {
                         .param("projection", "appointmentView"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$._embedded.appointments.length()").value(2));
+    }
+
+    @Test
+    @Transactional
+    @Rollback
+    void testGetOnCall_ByNurse_Success() throws Exception {
+
+        // Nurse
+        Nurse nurse = new Nurse(2001, "OnCall Nurse", "Nurse", true, 5555);
+        nurseRepository.save(nurse);
+
+        // Block
+        Block block = new Block();
+        block.setBlockFloor(2);
+        block.setBlockCode(101);
+        blockRepository.save(block);
+
+        // OnCall
+        OnCall onCall = new OnCall();
+        onCall.setNurse(2001);
+        onCall.setBlockFloor(2);
+        onCall.setBlockCode(101);
+        onCall.setOnCallStart(new Date());
+        onCall.setOnCallEnd(new Date(System.currentTimeMillis() + 100000));
+
+        onCallRepository.save(onCall);
+        onCallRepository.flush();
+        mockMvc.perform(get("/oncalls/search/byNurse")
+                        .param("nurse", "2001")
+                        .param("projection", "onCallView"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$._embedded.onCalls").isArray())
+                .andExpect(jsonPath("$._embedded.onCalls").isNotEmpty());
+    }
+    @Test
+    @Transactional
+    @Rollback
+    void testGetOnCall_NoData() throws Exception {
+
+        mockMvc.perform(get("/oncalls/search/byNurse")
+                        .param("nurse", "9999")
+                        .param("projection", "onCallView"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$._embedded.onCalls").isEmpty());
+    }
+    @Test
+    @Transactional
+    @Rollback
+    void testOnCallProjectionFields() throws Exception {
+
+
+        Nurse nurse = new Nurse(2001, "OnCall Nurse", "Nurse", true, 5555);
+        nurseRepository.save(nurse);
+
+
+        Block block = new Block(2, 101);
+        block.setNew(true);
+
+        blockRepository.save(block);
+        blockRepository.flush();
+
+
+        OnCall onCall = new OnCall();
+
+        onCall.setNurse(2001);
+        onCall.setNurseEntity(nurse);
+
+        onCall.setBlockFloor(2);
+        onCall.setBlockCode(101);
+        onCall.setBlock(block);
+
+        onCall.setOnCallStart(new Date());
+        onCall.setOnCallEnd(new Date(System.currentTimeMillis() + 100000));
+
+        onCallRepository.save(onCall);
+        onCallRepository.flush();
+
+        mockMvc.perform(get("/oncalls/search/byNurse")
+                        .param("nurse", "2001")
+                        .param("projection", "onCallView"))
+                .andDo(print())
+                .andExpect(status().isOk())
+
+                .andExpect(jsonPath("$._embedded.onCalls").isArray())
+                .andExpect(jsonPath("$._embedded.onCalls").isNotEmpty())
+
+                .andExpect(jsonPath("$._embedded.onCalls[0].blockFloor").value(2))
+                .andExpect(jsonPath("$._embedded.onCalls[0].blockCode").value(101))
+                .andExpect(jsonPath("$._embedded.onCalls[0].nurseName").value("OnCall Nurse"));
+    }
+    @Test
+    void testGetOnCall_InvalidParam() throws Exception {
+
+        mockMvc.perform(get("/oncalls/search/byNurse")
+                        .param("nurse", "abc"))
+                .andExpect(status().isInternalServerError());
+    }
+    @Test
+    void testGetOnCall_MissingParam() throws Exception {
+
+        mockMvc.perform(get("/oncalls/search/byNurse"))
+                .andExpect(status().isOk());
     }
 }
