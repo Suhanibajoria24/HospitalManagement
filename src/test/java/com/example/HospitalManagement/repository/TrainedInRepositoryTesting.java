@@ -17,8 +17,12 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 
+import com.example.HospitalManagement.Entity.Physician;
+import com.example.HospitalManagement.Entity.Procedure;
 import com.example.HospitalManagement.Entity.TrainedIn;
 import com.example.HospitalManagement.Entity.TrainedInId;
+import com.example.HospitalManagement.Repository.PhysicianRepository;
+import com.example.HospitalManagement.Repository.ProcedureRepository;
 import com.example.HospitalManagement.Repository.TrainedInRepository;
 
 @SpringBootTest
@@ -27,11 +31,38 @@ public class TrainedInRepositoryTesting {
     @Autowired
     private TrainedInRepository trainedInRepository;
 
-    private static final Integer TEST_PHYSICIAN = 1003;
-    private static final Integer TEST_TREATMENT = 1001;
+    @Autowired
+private PhysicianRepository physicianRepository;
 
-    @BeforeEach
-    void setUp() {
+@Autowired
+private ProcedureRepository procedureRepository;
+
+private static final Integer TEST_PHYSICIAN = 1003;
+private static final Integer TEST_TREATMENT = 1001;
+
+@BeforeEach
+void setUp() {
+    // Create physician if not exists
+    if (!physicianRepository.existsById(TEST_PHYSICIAN)) {
+        Physician physician = new Physician();
+        physician.setEmployeeId(TEST_PHYSICIAN);
+        physician.setName("Dr Test");
+        physician.setPosition("Physician");
+        physician.setSsn(123456789);
+        physicianRepository.save(physician);
+    }
+
+    // Create procedure if not exists
+    if (!procedureRepository.existsById(TEST_TREATMENT)) {
+        Procedure procedure = new Procedure();
+        procedure.setCode(TEST_TREATMENT);
+        procedure.setName("Test Procedure");
+        procedure.setCost(100.0);  // was missing — @NotNull in Procedure entity
+        procedureRepository.save(procedure);
+    }
+
+    // Create trained_in record
+    if (!trainedInRepository.existsById(new TrainedInId(TEST_PHYSICIAN, TEST_TREATMENT))) {
         TrainedIn t = new TrainedIn();
         t.setPhysician(TEST_PHYSICIAN);
         t.setTreatment(TEST_TREATMENT);
@@ -39,11 +70,22 @@ public class TrainedInRepositoryTesting {
         t.setCertificationExpires(new Date());
         trainedInRepository.save(t);
     }
-
-    @AfterEach
-    void tearDown() {
+}
+@AfterEach
+void tearDown() {
+    // Delete in FK order — child first, then parents
+    if (trainedInRepository.existsById(new TrainedInId(TEST_PHYSICIAN, TEST_TREATMENT))) {
         trainedInRepository.deleteById(new TrainedInId(TEST_PHYSICIAN, TEST_TREATMENT));
     }
+
+    if (physicianRepository.existsById(TEST_PHYSICIAN)) {
+        physicianRepository.deleteById(TEST_PHYSICIAN);
+    }
+
+    if (procedureRepository.existsById(TEST_TREATMENT)) {
+        procedureRepository.deleteById(TEST_TREATMENT);
+    }
+}
 
     // --- findByTreatment ---
 
@@ -77,39 +119,39 @@ public class TrainedInRepositoryTesting {
 
     // --- findByPhysicianAndTreatment ---
 
-    @Test
-    void testFindByPhysicianAndTreatment_Success() {
-        Optional<TrainedIn> result = trainedInRepository
-                .findByPhysicianAndTreatment(TEST_PHYSICIAN, TEST_TREATMENT);
+@Test
+void testFindByPhysicianAndTreatment_Success() {
+    Page<TrainedIn> result = trainedInRepository
+            .findByPhysicianAndTreatment(TEST_PHYSICIAN, TEST_TREATMENT, PageRequest.of(0, 5));
 
-        assertTrue(result.isPresent());
-        assertEquals(TEST_PHYSICIAN, result.get().getPhysician());
-        assertEquals(TEST_TREATMENT, result.get().getTreatment());
-    }
+    assertFalse(result.isEmpty());
+    assertEquals(TEST_PHYSICIAN, result.getContent().get(0).getPhysician());
+    assertEquals(TEST_TREATMENT, result.getContent().get(0).getTreatment());
+}
 
-    @Test
-    void testFindByPhysicianAndTreatment_NotFound() {
-        Optional<TrainedIn> result = trainedInRepository
-                .findByPhysicianAndTreatment(99999, 99999);
+@Test
+void testFindByPhysicianAndTreatment_NotFound() {
+    Page<TrainedIn> result = trainedInRepository
+            .findByPhysicianAndTreatment(99999, 99999, PageRequest.of(0, 5));
 
-        assertTrue(result.isEmpty());
-    }
+    assertTrue(result.isEmpty());
+}
 
-    @Test
-    void testFindByPhysicianAndTreatment_WrongPhysician() {
-        Optional<TrainedIn> result = trainedInRepository
-                .findByPhysicianAndTreatment(99999, TEST_TREATMENT);
+@Test
+void testFindByPhysicianAndTreatment_WrongPhysician() {
+    Page<TrainedIn> result = trainedInRepository
+            .findByPhysicianAndTreatment(99999, TEST_TREATMENT, PageRequest.of(0, 5));
 
-        assertTrue(result.isEmpty());
-    }
+    assertTrue(result.isEmpty());
+}
 
-    @Test
-    void testFindByPhysicianAndTreatment_WrongTreatment() {
-        Optional<TrainedIn> result = trainedInRepository
-                .findByPhysicianAndTreatment(TEST_PHYSICIAN, 99999);
+@Test
+void testFindByPhysicianAndTreatment_WrongTreatment() {
+    Page<TrainedIn> result = trainedInRepository
+            .findByPhysicianAndTreatment(TEST_PHYSICIAN, 99999, PageRequest.of(0, 5));
 
-        assertTrue(result.isEmpty());
-    }
+    assertTrue(result.isEmpty());
+}
 
     // --- save ---
 

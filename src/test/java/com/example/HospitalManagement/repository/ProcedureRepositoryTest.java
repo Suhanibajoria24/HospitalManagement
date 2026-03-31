@@ -15,9 +15,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.test.annotation.Rollback;
-import org.springframework.transaction.annotation.Transactional;
+
 
 import com.example.HospitalManagement.Entity.Procedure;
 import com.example.HospitalManagement.Repository.ProcedureRepository;
@@ -83,7 +81,7 @@ void testFindByName_Success() {
 
 @Test
 void testFindByName_NotFound() {
-    List<Procedure> found = procedureRepository.findByNameIgnoreCase("CT scan");
+    List<Procedure> found = procedureRepository.findByNameIgnoreCase("new test");
     assertTrue(found.isEmpty());
 }
 

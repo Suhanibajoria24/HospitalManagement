@@ -21,8 +21,10 @@ public interface TrainedInRepository extends JpaRepository<TrainedIn, TrainedInI
     Page<TrainedIn> findByTreatment(@Param("treatment") Integer treatment, Pageable pageable);
 
     @RestResource(path = "findByPhysicianAndTreatment")
-    Optional<TrainedIn> findByPhysicianAndTreatment(
+    Page<TrainedIn> findByPhysicianAndTreatment(
         @Param("physician") Integer physician,
-        @Param("treatment") Integer treatment);
+        @Param("treatment") Integer treatment,
+        Pageable pageable
+    );
 
 }

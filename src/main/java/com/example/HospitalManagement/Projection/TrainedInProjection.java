@@ -1,5 +1,6 @@
 package com.example.HospitalManagement.Projection;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.rest.core.config.Projection;
 import com.example.HospitalManagement.Entity.TrainedIn;
 import java.util.Date;
@@ -12,10 +13,8 @@ public interface TrainedInProjection {
     Date getCertificationDate();
     Date getCertificationExpires();
 
-    default boolean isHasExpired() {
-        return getCertificationExpires() != null &&
-               getCertificationExpires().before(new Date());
-    }
+    @Value("#{target.certificationExpires != null && target.certificationExpires.before(new java.util.Date())}")
+    boolean isHasExpired();
 
     interface PhysicianInfo {
         String getName();
