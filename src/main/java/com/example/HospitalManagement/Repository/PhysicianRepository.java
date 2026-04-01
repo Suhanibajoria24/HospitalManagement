@@ -8,6 +8,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.repository.query.Param;
 import org.springframework.data.rest.core.annotation.RepositoryRestResource;
+import org.springframework.data.rest.core.annotation.RestResource;
 
 @RepositoryRestResource(path = "allPhysician", collectionResourceRel = "physicians")
 public interface PhysicianRepository extends JpaRepository<Physician, Integer> {
@@ -20,4 +21,9 @@ public interface PhysicianRepository extends JpaRepository<Physician, Integer> {
 
     // 3. Search by SSN (No pagination needed here!)
     Physician findBySsn(@Param("ssn") int ssn);
+
+
+    @RestResource(path = "findByNameContaining", rel = "findByNameContaining")
+    Page<Physician> findByNameContainingIgnoreCase(@Param("name") String name, Pageable pageable);
+
 }
