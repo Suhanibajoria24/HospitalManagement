@@ -14,21 +14,24 @@ public class TrainedInController {
     @Autowired
     private TrainedInRepository trainedInRepository;
 
-    @PatchMapping("/trainedIn/renew/{treatmentId}/{physicianId}")
-    public ResponseEntity<TrainedIn> renewCertification(
-            @PathVariable Integer treatmentId,
-            @PathVariable Integer physicianId,
-            @RequestBody TrainedIn request) {
+ @PatchMapping("/trainedIn/renew/{treatmentId}/{physicianId}")
+public ResponseEntity<TrainedIn> renewCertification(
+        @PathVariable Integer treatmentId,
+        @PathVariable Integer physicianId,
+        @RequestBody TrainedIn request) {
 
-        TrainedInId id = new TrainedInId(physicianId, treatmentId);
+    TrainedInId id = new TrainedInId(physicianId, treatmentId);
 
-        TrainedIn trainedIn = trainedInRepository.findById(id)
-                .orElseThrow(() -> new CertificationNotFoundException(
-                        physicianId, treatmentId));
+    TrainedIn trainedIn = trainedInRepository.findById(id)
+            .orElseThrow(() -> new CertificationNotFoundException(physicianId, treatmentId));
 
-        // only expiry can be updated, PK fields are untouchable
-        trainedIn.setCertificationExpires(request.getCertificationExpires());
-
-        return ResponseEntity.ok(trainedInRepository.save(trainedIn));
+    // Only update certificationDate if provided
+    if (request.getCertificationDate() != null) {
+        trainedIn.setCertificationDate(request.getCertificationDate());
     }
+    // Always update expiry
+    trainedIn.setCertificationExpires(request.getCertificationExpires());
+
+    return ResponseEntity.ok(trainedInRepository.save(trainedIn));
+}
 }
