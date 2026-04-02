@@ -8,8 +8,14 @@ import org.springframework.data.rest.core.config.Projection;
 public interface NurseProjection {
 
     String getName();
+
     String getPosition();
+
     boolean getRegistered();
+
     @Value("#{target.appointments != null && !target.appointments.isEmpty() ? 'BUSY (APPOINTMENT)' : (target.onCallSchedules != null && !target.onCallSchedules.isEmpty() ? 'BUSY (ON_CALL)' : 'AVAILABLE')}")
     String getAvailability();
+
+    Integer getSsn();
+
 }

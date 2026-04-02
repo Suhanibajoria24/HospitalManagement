@@ -17,10 +17,12 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -45,27 +47,81 @@ public class RoomApiTest {
         @Autowired
         private BlockRepository blockRepository;
 
-        @Autowired
-        private JdbcTemplate jdbcTemplate;
-
         private Block testBlock;
+        private int testFloor;
+        private int testCode;
+        private int roomId1;
+        private int roomId2;
+        private int roomId3;
+        private final Set<Integer> roomsToCleanup = new HashSet<>();
+        private final Set<BlockId> blocksToCleanup = new HashSet<>();
+
+        private BlockId nextUniqueBlockId() {
+                int attempts = 0;
+                while (attempts++ < 200) {
+                        int floor = ThreadLocalRandom.current().nextInt(1000, 10000);
+                        int code = ThreadLocalRandom.current().nextInt(1000, 10000);
+                        BlockId blockId = new BlockId(floor, code);
+                        if (!blockRepository.existsById(blockId)) {
+                                return blockId;
+                        }
+                }
+                throw new IllegalStateException("Could not generate unique BlockId for test");
+        }
+
+        private int nextUniqueRoomNumber() {
+                int attempts = 0;
+                while (attempts++ < 200) {
+                        int roomNumber = ThreadLocalRandom.current().nextInt(100000, 900000);
+                        if (!roomRepository.existsById(roomNumber)) {
+                                return roomNumber;
+                        }
+                }
+                throw new IllegalStateException("Could not generate unique roomNumber for test");
+        }
 
         @BeforeEach
         void setUp() {
-                testBlock = new Block(1, 100);
-                blockRepository.save(testBlock);
+                roomsToCleanup.clear();
+                blocksToCleanup.clear();
 
-                Room room1 = new Room(101, "ICU", false, testBlock);
-                Room room2 = new Room(102, "General", false, testBlock);
-                Room room3 = new Room(103, "ICU", true, testBlock);
+                BlockId blockId = nextUniqueBlockId();
+                testFloor = blockId.getBlockFloor();
+                testCode = blockId.getBlockCode();
+
+                testBlock = new Block(testFloor, testCode);
+                blockRepository.save(testBlock);
+                blocksToCleanup.add(blockId);
+
+                roomId1 = nextUniqueRoomNumber();
+                roomId2 = nextUniqueRoomNumber();
+                roomId3 = nextUniqueRoomNumber();
+
+                Room room1 = new Room(roomId1, "ICU", false, testBlock);
+                Room room2 = new Room(roomId2, "General", false, testBlock);
+                Room room3 = new Room(roomId3, "ICU", true, testBlock);
 
                 roomRepository.saveAll(List.of(room1, room2, room3));
+                roomsToCleanup.add(roomId1);
+                roomsToCleanup.add(roomId2);
+                roomsToCleanup.add(roomId3);
         }
 
         @AfterEach
         void tearDown() {
-                roomRepository.deleteAll();
-                blockRepository.deleteAll();
+                for (Integer roomId : roomsToCleanup) {
+                        if (roomRepository.existsById(roomId)) {
+                                roomRepository.deleteById(roomId);
+                        }
+                }
+                roomsToCleanup.clear();
+
+                for (BlockId blockId : blocksToCleanup) {
+                        if (blockRepository.existsById(blockId)) {
+                                blockRepository.deleteById(blockId);
+                        }
+                }
+                blocksToCleanup.clear();
         }
 
         @Test
@@ -113,43 +169,37 @@ public class RoomApiTest {
         @Test
         @DisplayName("API Test 4: Create Room With Correct Data and it should get Created")
         void createRoom_WithValidData_ReturnsCreated() throws Exception {
-                String body = """
-                                {
-                                  "roomNumber": 201,
-                                  "roomType": "Observation",
-                                  "blockFloor": 1,
-                                  "blockCode": 100,
-                                  "unavailable": false
-                                }
-                                """;
+                int roomNumber = nextUniqueRoomNumber();
+                String body = String.format(
+                                "{\"roomNumber\":%d,\"roomType\":\"Observation\",\"blockFloor\":%d,\"blockCode\":%d,\"unavailable\":false}",
+                                roomNumber, testFloor, testCode);
 
                 mockMvc.perform(post("/rooms")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(body))
                                 .andExpect(status().isCreated());
 
-                assertThat(roomRepository.existsById(201)).isTrue();
+                roomsToCleanup.add(roomNumber);
+                assertThat(roomRepository.existsById(roomNumber)).isTrue();
         }
 
         @Test
         @DisplayName("API Test 5: Create Room With No Existing Block (blockFloor and blockCode) and it should create a new Block and return 201 Created")
         void createRoom_WithNonExistentBlock_AutoCreatesBlockAndReturnsCreated() throws Exception {
-                String body = """
-                                {
-                                  "roomNumber": 202,
-                                  "roomType": "ICU",
-                                  "blockFloor": 99,
-                                  "blockCode": 99,
-                                  "unavailable": false
-                                }
-                                """;
+                int roomNumber = nextUniqueRoomNumber();
+                BlockId newBlockId = nextUniqueBlockId();
+                String body = String.format(
+                                "{\"roomNumber\":%d,\"roomType\":\"ICU\",\"blockFloor\":%d,\"blockCode\":%d,\"unavailable\":false}",
+                                roomNumber, newBlockId.getBlockFloor(), newBlockId.getBlockCode());
 
                 mockMvc.perform(post("/rooms")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(body))
                                 .andExpect(status().isCreated());
-                assertThat(blockRepository.existsById(new BlockId(99, 99))).isTrue();
-                assertThat(roomRepository.existsById(202)).isTrue();
+                roomsToCleanup.add(roomNumber);
+                blocksToCleanup.add(newBlockId);
+                assertThat(blockRepository.existsById(newBlockId)).isTrue();
+                assertThat(roomRepository.existsById(roomNumber)).isTrue();
         }
 
         @Test
@@ -243,27 +293,27 @@ public class RoomApiTest {
         @Test
         @DisplayName("Update PATCH: partial change roomType only returns 2xx and persists")
         void patchRoom_UpdateRoomTypeOnly_ReturnsSuccess() throws Exception {
-                mockMvc.perform(patch("/rooms/101")
+                mockMvc.perform(patch("/rooms/" + roomId1)
                                 .contentType(MERGE_PATCH_JSON)
                                 .content("{\"roomType\":\"Deluxe\"}"))
                                 .andExpect(status().is2xxSuccessful());
 
-                Room updated = roomRepository.findById(101).orElseThrow();
+                Room updated = roomRepository.findById(roomId1).orElseThrow();
                 assertThat(updated.getRoomType()).isEqualTo("Deluxe");
                 assertThat(updated.getUnavailable()).isFalse();
-                assertThat(updated.getBlockFloor()).isEqualTo(1);
-                assertThat(updated.getBlockCode()).isEqualTo(100);
+                assertThat(updated.getBlockFloor()).isEqualTo(testFloor);
+                assertThat(updated.getBlockCode()).isEqualTo(testCode);
         }
 
         @Test
         @DisplayName("Update PATCH: partial change unavailable only returns 2xx and persists")
         void patchRoom_UpdateUnavailableOnly_ReturnsSuccess() throws Exception {
-                mockMvc.perform(patch("/rooms/102")
+                mockMvc.perform(patch("/rooms/" + roomId2)
                                 .contentType(MERGE_PATCH_JSON)
                                 .content("{\"unavailable\":true}"))
                                 .andExpect(status().is2xxSuccessful());
 
-                Room updated = roomRepository.findById(102).orElseThrow();
+                Room updated = roomRepository.findById(roomId2).orElseThrow();
                 assertThat(updated.getUnavailable()).isTrue();
                 assertThat(updated.getRoomType()).isEqualTo("General");
         }
@@ -271,12 +321,12 @@ public class RoomApiTest {
         @Test
         @DisplayName("Update PATCH: change roomType and unavailable together returns 2xx and persists")
         void patchRoom_UpdateRoomTypeAndUnavailable_ReturnsSuccess() throws Exception {
-                mockMvc.perform(patch("/rooms/103")
+                mockMvc.perform(patch("/rooms/" + roomId3)
                                 .contentType(MERGE_PATCH_JSON)
                                 .content("{\"roomType\":\"Isolation\",\"unavailable\":false}"))
                                 .andExpect(status().is2xxSuccessful());
 
-                Room updated = roomRepository.findById(103).orElseThrow();
+                Room updated = roomRepository.findById(roomId3).orElseThrow();
                 assertThat(updated.getRoomType()).isEqualTo("Isolation");
                 assertThat(updated.getUnavailable()).isFalse();
         }
@@ -284,13 +334,13 @@ public class RoomApiTest {
         @Test
         @DisplayName("Update PATCH: empty merge-patch body returns 2xx (no-op)")
         void patchRoom_EmptyMergePatchBody_ReturnsSuccess() throws Exception {
-                Room before = roomRepository.findById(101).orElseThrow();
-                mockMvc.perform(patch("/rooms/101")
+                Room before = roomRepository.findById(roomId1).orElseThrow();
+                mockMvc.perform(patch("/rooms/" + roomId1)
                                 .contentType(MERGE_PATCH_JSON)
                                 .content("{}"))
                                 .andExpect(status().is2xxSuccessful());
 
-                Room after = roomRepository.findById(101).orElseThrow();
+                Room after = roomRepository.findById(roomId1).orElseThrow();
                 assertThat(after.getRoomType()).isEqualTo(before.getRoomType());
                 assertThat(after.getUnavailable()).isEqualTo(before.getUnavailable());
         }
@@ -307,7 +357,7 @@ public class RoomApiTest {
         @Test
         @DisplayName("Update PATCH: malformed JSON returns 400 Bad Request")
         void patchRoom_MalformedJson_ReturnsBadRequest() throws Exception {
-                mockMvc.perform(patch("/rooms/101")
+                mockMvc.perform(patch("/rooms/" + roomId1)
                                 .contentType(MERGE_PATCH_JSON)
                                 .content("{broken"))
                                 .andExpect(status().isBadRequest());
@@ -316,54 +366,44 @@ public class RoomApiTest {
         @Test
         @DisplayName("Update PUT: full replace with valid body returns 2xx and persists")
         void putRoom_FullReplace_ReturnsSuccess() throws Exception {
-                String body = """
-                                {
-                                  "roomNumber": 101,
-                                  "roomType": "Surgery",
-                                  "blockFloor": 1,
-                                  "blockCode": 100,
-                                  "unavailable": true
-                                }
-                                """;
+                String body = String.format(
+                                "{\"roomNumber\":%d,\"roomType\":\"Surgery\",\"blockFloor\":%d,\"blockCode\":%d,\"unavailable\":true}",
+                                roomId1, testFloor, testCode);
 
-                mockMvc.perform(put("/rooms/101")
+                mockMvc.perform(put("/rooms/" + roomId1)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(body))
                                 .andExpect(status().is2xxSuccessful());
 
-                Room updated = roomRepository.findById(101).orElseThrow();
+                Room updated = roomRepository.findById(roomId1).orElseThrow();
                 assertThat(updated.getRoomType()).isEqualTo("Surgery");
                 assertThat(updated.getUnavailable()).isTrue();
-                assertThat(updated.getBlockFloor()).isEqualTo(1);
-                assertThat(updated.getBlockCode()).isEqualTo(100);
+                assertThat(updated.getBlockFloor()).isEqualTo(testFloor);
+                assertThat(updated.getBlockCode()).isEqualTo(testCode);
         }
 
         @Test
         @DisplayName("Update PUT: non-existent id upserts (Spring Data REST creates resource) returns 2xx")
         void putRoom_NonExistentId_UpsertsAndReturnsSuccess() throws Exception {
-                String body = """
-                                {
-                                  "roomNumber": 888888,
-                                  "roomType": "ICU",
-                                  "blockFloor": 1,
-                                  "blockCode": 100,
-                                  "unavailable": false
-                                }
-                                """;
+                int upsertRoomId = nextUniqueRoomNumber();
+                String body = String.format(
+                                "{\"roomNumber\":%d,\"roomType\":\"ICU\",\"blockFloor\":%d,\"blockCode\":%d,\"unavailable\":false}",
+                                upsertRoomId, testFloor, testCode);
 
-                mockMvc.perform(put("/rooms/888888")
+                mockMvc.perform(put("/rooms/" + upsertRoomId)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(body))
                                 .andExpect(status().is2xxSuccessful());
 
-                assertThat(roomRepository.existsById(888888)).isTrue();
+                roomsToCleanup.add(upsertRoomId);
+                assertThat(roomRepository.existsById(upsertRoomId)).isTrue();
         }
 
         @ParameterizedTest(name = "{0}")
         @MethodSource("invalidRoomPatchBodies")
         @DisplayName("Update PATCH: invalid merge-patch payloads return 400 Bad Request")
         void patchRoom_InvalidMergePatch_ReturnsBadRequest(String description, String jsonBody) throws Exception {
-                mockMvc.perform(patch("/rooms/101")
+                mockMvc.perform(patch("/rooms/" + roomId1)
                                 .contentType(MERGE_PATCH_JSON)
                                 .content(jsonBody))
                                 .andExpect(status().isBadRequest());

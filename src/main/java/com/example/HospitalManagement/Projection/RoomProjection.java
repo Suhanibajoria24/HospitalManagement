@@ -10,8 +10,10 @@ public interface RoomProjection {
     Integer getRoomNumber();
     String getRoomType();
 
-    @Value("#{target.blockFloor + '-' + target.blockCode}")
+    @Value("#{ 'Floor ' + target.blockFloor + ' • Block ' + target.blockCode }")
     String getBlock();
+
+
 
     default String getStatus() {
         if (Boolean.TRUE.equals(getUnavailable())) {
